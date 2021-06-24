@@ -1,0 +1,42 @@
+version: '3' # composeファイルのバーション指定
+services:
+  app: # service名
+    build: 
+      context: . # ビルドに使用するDockerfileがあるディレクトリ指定
+      dockerfile: ./docker/rails/Dockerfile
+    container_name: rails_container
+    tty: true # コンテナの起動永続化
+    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 8000 -b '0.0.0.0'"
+    volumes:
+      - ./backend:/pet_sns # マウントディレクトリ指定
+    ports:
+      - 8000:8000
+    environment:
+      DB_HOST: db
+  react:
+    build:
+      context: .
+      dockerfile: ./docker/react/Dockerfile
+    container_name: react_container
+    tty: true
+    volumes:
+    - ./frontend:/app/react
+    - ./bundle-path:/bundle
+    command: sh -c "cd /app/react  && yarn start"
+    ports:
+      - 3000:3000
+  db:
+    image: mysql:5.7
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: development
+      MYSQL_DATABASE: pet_sns_development
+      MYSQL_USER: dev_user
+      MYSQL_PASSWORD: abc12345
+      TZ: 'Asia/Tokyo'
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+    - 3306:3306
+
+volumes:
+  bundle-path:
